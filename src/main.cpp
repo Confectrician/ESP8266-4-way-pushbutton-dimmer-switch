@@ -9,20 +9,20 @@ void loopHandler();
 #pragma region Variable declarations
 const int DEBOUNCE_INTERVAL = 100;
 
-const int taster1Pin = D1;
-const int taster2Pin = D2;
-const int taster3Pin = D3;
-const int taster4Pin = D4;
+const int pushbutton1Pin = D1;
+const int pushbutton2Pin = D2;
+const int pushbutton3Pin = D3;
+const int pushbutton4Pin = D4;
 
-int taster1LastReading = -1;
-int taster2LastReading = -1;  
-int taster3LastReading = -1;  
-int taster4LastReading = -1; 
+int pushbutton1LastReading = -1;
+int pushbutton2LastReading = -1;  
+int pushbutton3LastReading = -1;  
+int pushbutton4LastReading = -1; 
 
-int taster1State = LOW;
-int taster2State = LOW;  
-int taster3State = LOW;  
-int taster4State = LOW;
+int pushbutton1State = LOW;
+int pushbutton2State = LOW;  
+int pushbutton3State = LOW;  
+int pushbutton4State = LOW;
 
 Bounce debouncer1 = Bounce();
 Bounce debouncer2 = Bounce();
@@ -31,10 +31,10 @@ Bounce debouncer4 = Bounce();
 #pragma endregion
 
 #pragma region Node declarations
-HomieNode taster1Node("taster1", "taster");
-HomieNode taster2Node("taster2", "taster");
-HomieNode taster3Node("taster3", "taster");
-HomieNode taster4Node("taster4", "taster");
+HomieNode pushbutton1Node("pushbutton1", "pushbutton");
+HomieNode pushbutton2Node("pushbutton2", "pushbutton");
+HomieNode pushbutton3Node("pushbutton3", "pushbutton");
+HomieNode pushbutton4Node("pushbutton4", "pushbutton");
 #pragma endregion
 
 void setup() {
@@ -43,23 +43,23 @@ void setup() {
 
     // Hardware configuration
     #pragma region
-    pinMode(taster1Pin, INPUT);
-    pinMode(taster2Pin, INPUT);
-    pinMode(taster3Pin, INPUT);
-    pinMode(taster4Pin, INPUT);
+    pinMode(pushbutton1Pin, INPUT);
+    pinMode(pushbutton2Pin, INPUT);
+    pinMode(pushbutton3Pin, INPUT);
+    pinMode(pushbutton4Pin, INPUT);
 
-    digitalWrite(taster1Pin, HIGH);
-    digitalWrite(taster2Pin, HIGH);
-    digitalWrite(taster3Pin, HIGH);
-    digitalWrite(taster4Pin, HIGH);
+    digitalWrite(pushbutton1Pin, HIGH);
+    digitalWrite(pushbutton2Pin, HIGH);
+    digitalWrite(pushbutton3Pin, HIGH);
+    digitalWrite(pushbutton4Pin, HIGH);
     #pragma endregion
     
     // Debouncer configuration
     #pragma region
-    debouncer1.attach(taster1Pin);
-    debouncer2.attach(taster2Pin);
-    debouncer3.attach(taster3Pin);
-    debouncer4.attach(taster4Pin);
+    debouncer1.attach(pushbutton1Pin);
+    debouncer2.attach(pushbutton2Pin);
+    debouncer3.attach(pushbutton3Pin);
+    debouncer4.attach(pushbutton4Pin);
 
     debouncer1.interval(DEBOUNCE_INTERVAL);
     debouncer2.interval(DEBOUNCE_INTERVAL);
@@ -68,21 +68,21 @@ void setup() {
     #pragma endregion
 
     // Homie configuration
-    Homie_setFirmware("luba-tasterTest", "1.0.0"); // The underscore is not a typo! See Magic bytes
-    Homie.setGlobalInputHandler(globalInputHandler); // before Homie.setup()
+    Homie_setFirmware("4-way-pushbutton-dimmer-switch", "1.0.0"); // The underscore is not a typo! See Magic bytes
+    Homie.setGlobalInputHandler(globalInputHandler);
     Homie.setLoopFunction(loopHandler);
 
     // Node configurations
     #pragma region
-    taster1Node.advertise("pressed");
-    taster2Node.advertise("pressed");
-    taster3Node.advertise("pressed");
-    taster4Node.advertise("pressed");
+    pushbutton1Node.advertise("pressed");
+    pushbutton2Node.advertise("pressed");
+    pushbutton3Node.advertise("pressed");
+    pushbutton4Node.advertise("pressed");
 
-    taster1Node.advertise("switchState").settable();
-    taster2Node.advertise("switchState").settable();
-    taster3Node.advertise("switchState").settable();
-    taster4Node.advertise("switchState").settable();
+    pushbutton1Node.advertise("switchState").settable();
+    pushbutton2Node.advertise("switchState").settable();
+    pushbutton3Node.advertise("switchState").settable();
+    pushbutton4Node.advertise("switchState").settable();
     #pragma endregion
 
     Homie.setup();
@@ -121,14 +121,14 @@ bool globalInputHandler(const HomieNode& node, const String& property, const Hom
 
         Homie.getLogger() << "Property and value are valid. Checking for the correct Node now." << endl;
         
-        if(node.getId() == "taster1"){
-            taster1State = (value == "true") ? HIGH : LOW;
-        } else if(node.getId() == "taster2"){
-            taster2State = (value == "true") ? HIGH : LOW;
-        } else if(node.getId() == "taster3"){
-            taster3State = (value == "true") ? HIGH : LOW;
-        } else if(node.getId() == "taster4"){
-            taster4State = (value == "true") ? HIGH : LOW;            
+        if(node.getId() == "pushbutton1"){
+            pushbutton1State = (value == "true") ? HIGH : LOW;
+        } else if(node.getId() == "pushbutton2"){
+            pushbutton2State = (value == "true") ? HIGH : LOW;
+        } else if(node.getId() == "pushbutton3"){
+            pushbutton3State = (value == "true") ? HIGH : LOW;
+        } else if(node.getId() == "pushbutton4"){
+            pushbutton4State = (value == "true") ? HIGH : LOW;            
         } else {
             return false; // Unknown Node. Return unhandled            
         }
@@ -143,10 +143,10 @@ bool globalInputHandler(const HomieNode& node, const String& property, const Hom
 
 void loopHandler(){
 
-    checkPushButton(taster1Node, debouncer1.read(), taster1State, taster1LastReading);
-    checkPushButton(taster2Node, debouncer2.read(), taster2State, taster2LastReading);
-    checkPushButton(taster3Node, debouncer3.read(), taster3State, taster3LastReading);
-    checkPushButton(taster4Node, debouncer4.read(), taster4State, taster4LastReading);
+    checkPushButton(pushbutton1Node, debouncer1.read(), pushbutton1State, pushbutton1LastReading);
+    checkPushButton(pushbutton2Node, debouncer2.read(), pushbutton2State, pushbutton2LastReading);
+    checkPushButton(pushbutton3Node, debouncer3.read(), pushbutton3State, pushbutton3LastReading);
+    checkPushButton(pushbutton4Node, debouncer4.read(), pushbutton4State, pushbutton4LastReading);
 
 }
 
