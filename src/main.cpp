@@ -1,48 +1,47 @@
 #include <Homie.h>
+#include <main.h>
 
-#pragma region Functions declarations
 bool globalInputHandler(const HomieNode& node, const String& property, const HomieRange& range, const String& value);
 void checkPushButton(const HomieNode& node, const int& reading, int& state, int& lastReading);
 void loopHandler();
-#pragma endregion
 
-#pragma region Variable declarations
-const int DEBOUNCE_INTERVAL = 100;
+// Interval config
+const int DEBOUNCE_INTERVAL = 70;
+const int DIMMER_PUSH_INTERVAL = 300;
+const int DIMMER_CONTINUE_INTERVAL = 100;
+const int DIMMER_STEP_VALUE = 2;
 
-const int pushbutton1Pin = D1;
-const int pushbutton2Pin = D2;
+// Node Config, for easy editing the topics and property types
+const char* NODE_TYPE = "pushbutton";
+const char* NODE_1 = "pushbutton1";
+const char* NODE_2 = "pushbutton2";
+const char* NODE_3 = "pushbutton3";
+const char* NODE_4 = "pushbutton4";
+
+// Pin config
+const int pushbutton1Pin = D1; // Caution -> 10k pullup needed here
+const int pushbutton2Pin = D2; // Caution -> 10k pullup needed here
 const int pushbutton3Pin = D3;
 const int pushbutton4Pin = D4;
 
-int pushbutton1LastReading = -1;
-int pushbutton2LastReading = -1;  
-int pushbutton3LastReading = -1;  
-int pushbutton4LastReading = -1; 
+// Button meta variables
+// TODO Maybe let pushButton inherit from HomieNode, to keep all metadata in one class
+pushButton pushButton1;
+pushButton pushButton2;
+pushButton pushButton3;
+pushButton pushButton4;
 
-int pushbutton1State = LOW;
-int pushbutton2State = LOW;  
-int pushbutton3State = LOW;  
-int pushbutton4State = LOW;
-
-Bounce debouncer1 = Bounce();
-Bounce debouncer2 = Bounce();
-Bounce debouncer3 = Bounce();
-Bounce debouncer4 = Bounce();
-#pragma endregion
-
-#pragma region Node declarations
-HomieNode pushbutton1Node("pushbutton1", "pushbutton");
-HomieNode pushbutton2Node("pushbutton2", "pushbutton");
-HomieNode pushbutton3Node("pushbutton3", "pushbutton");
-HomieNode pushbutton4Node("pushbutton4", "pushbutton");
-#pragma endregion
+// Node instances
+HomieNode pushbutton1Node(NODE_1, NODE_TYPE);
+HomieNode pushbutton2Node(NODE_2, NODE_TYPE);
+HomieNode pushbutton3Node(NODE_3, NODE_TYPE);
+HomieNode pushbutton4Node(NODE_4, NODE_TYPE);
 
 void setup() {
     Serial.begin(115200);
     Serial << endl << endl;
 
     // Hardware configuration
-    #pragma region
     pinMode(pushbutton1Pin, INPUT);
     pinMode(pushbutton2Pin, INPUT);
     pinMode(pushbutton3Pin, INPUT);
@@ -52,28 +51,26 @@ void setup() {
     digitalWrite(pushbutton2Pin, HIGH);
     digitalWrite(pushbutton3Pin, HIGH);
     digitalWrite(pushbutton4Pin, HIGH);
-    #pragma endregion
     
     // Debouncer configuration
-    #pragma region
-    debouncer1.attach(pushbutton1Pin);
-    debouncer2.attach(pushbutton2Pin);
-    debouncer3.attach(pushbutton3Pin);
-    debouncer4.attach(pushbutton4Pin);
+    pushButton1.debouncer.attach(pushbutton1Pin);
+    pushButton2.debouncer.attach(pushbutton2Pin);
+    pushButton3.debouncer.attach(pushbutton3Pin);
+    pushButton4.debouncer.attach(pushbutton4Pin);
 
-    debouncer1.interval(DEBOUNCE_INTERVAL);
-    debouncer2.interval(DEBOUNCE_INTERVAL);
-    debouncer3.interval(DEBOUNCE_INTERVAL);
-    debouncer4.interval(DEBOUNCE_INTERVAL);
-    #pragma endregion
+    pushButton1.debouncer.interval(DEBOUNCE_INTERVAL);
+    pushButton2.debouncer.interval(DEBOUNCE_INTERVAL);
+    pushButton3.debouncer.interval(DEBOUNCE_INTERVAL);
+    pushButton4.debouncer.interval(DEBOUNCE_INTERVAL);
+
 
     // Homie configuration
-    Homie_setFirmware("4-way-pushbutton-dimmer-switch", "1.0.0"); // The underscore is not a typo! See Magic bytes
+    Homie_setFirmware("4-way-pushbutton-dimmer-switch", "1.0.0"); 
+    Homie.disableResetTrigger(); // Needed to prevent resetting the device by mistake, since we are using D3 input.
     Homie.setGlobalInputHandler(globalInputHandler);
     Homie.setLoopFunction(loopHandler);
 
     // Node configurations
-    #pragma region
     pushbutton1Node.advertise("pressed");
     pushbutton2Node.advertise("pressed");
     pushbutton3Node.advertise("pressed");
@@ -83,33 +80,87 @@ void setup() {
     pushbutton2Node.advertise("switchState").settable();
     pushbutton3Node.advertise("switchState").settable();
     pushbutton4Node.advertise("switchState").settable();
-    #pragma endregion
+
+    pushbutton1Node.advertise("dimmerValue").settable();
+    pushbutton2Node.advertise("dimmerValue").settable();
+    pushbutton3Node.advertise("dimmerValue").settable();
+    pushbutton4Node.advertise("dimmerValue").settable();
 
     Homie.setup();
 }
 
 void loop() {
     Homie.loop();
-    debouncer1.update();
-    debouncer2.update();
-    debouncer3.update();
-    debouncer4.update();
+    pushButton1.debouncer.update();
+    pushButton2.debouncer.update();
+    pushButton3.debouncer.update();
+    pushButton4.debouncer.update();
 }
 
-#pragma region Custom functions implementation
+void checkPushButton(const HomieNode& node, const int& reading, pushButton& button){
+    
+    // pushbutton stated changed
+    if(reading != button.lastReading){
 
-void checkPushButton(const HomieNode& node, const int& reading, int& state, int& lastReading){
-    if(reading != lastReading){
-
-        Homie.getLogger() << node.getId() << " changed" << endl;        
+        Homie.getLogger() << node.getId() << " changed on " << millis() << " millis" << endl;        
         node.setProperty("pressed").send(reading ? "false" : "true");
 
-        if(reading == HIGH && lastReading== LOW){
-            node.setProperty("switchState").send(state ? "false" : "true");
-            state = state ? LOW : HIGH;
+        // update switchState when the pushbutton is released and was pushed not later than DIMMER_PUSH_INTERVAL
+        if(reading == HIGH && button.lastReading== LOW && (millis() - button.lastReadingTime < DIMMER_PUSH_INTERVAL)){
+
+            node.setProperty("switchState").send(button.switchState ? "false" : "true");
+            node.setProperty("dimmerValue").send(button.switchState ? "0" : "100");
+
+            button.dimmerValue = button.switchState? 0 : 100;
+            button.switchState = button.switchState ? LOW : HIGH;
+            
         }
 
-        lastReading = reading;
+        button.lastReading = reading;
+        button.lastReadingTime = millis();
+    }
+    // pushbutton state is consant. 
+    else if(reading == button.lastReading){
+
+        // start dimmerModer when DIMMER_PUSH_INTERVAL time has reached and button is pressed
+        if(!button.dimmerMode && reading == LOW && (millis() - button.lastReadingTime) > DIMMER_PUSH_INTERVAL){
+            button.dimmerMode = true;
+            button.dimmerReadingTime = button.lastReadingTime;            
+        }
+
+        if(button.dimmerMode){
+            // start dimmer action when DIMMER_CONTINUE_INTERVAL time has reached and button is pressed
+            if(reading == LOW && (millis() - button.dimmerReadingTime) > DIMMER_CONTINUE_INTERVAL){    
+                
+                if(button.switchState == LOW && button.dimmerValue <= 100){
+                    button.dimmerValue += DIMMER_STEP_VALUE;
+                    node.setProperty("dimmerValue").send(String(button.dimmerValue));
+
+                    if(button.dimmerValue == 100){
+                        node.setProperty("switchState").send("true");
+                        button.switchState = HIGH;
+                    }
+                }
+                else if(button.switchState == HIGH && button.dimmerValue >= 0){
+                    button.dimmerValue -= DIMMER_STEP_VALUE;
+                    node.setProperty("dimmerValue").send(String(button.dimmerValue));
+
+                    if(button.dimmerValue == 0){
+                        node.setProperty("switchState").send("false");
+                        button.switchState = LOW;
+                    }
+                }
+
+                Homie.getLogger() << "--> " << node.getId() << "dimmer action processed. DimmerValue = " << button.dimmerValue << endl;
+                button.dimmerReadingTime = millis();
+
+            }
+            // stop dimmerMode when pushbutton is released 
+            else if (reading == HIGH) {
+                button.dimmerMode = false;
+            }
+        }
+
     }
 }
 
@@ -122,13 +173,13 @@ bool globalInputHandler(const HomieNode& node, const String& property, const Hom
         Homie.getLogger() << "Property and value are valid. Checking for the correct Node now." << endl;
         
         if(node.getId() == "pushbutton1"){
-            pushbutton1State = (value == "true") ? HIGH : LOW;
+            pushButton1.switchState = (value == "true") ? HIGH : LOW;
         } else if(node.getId() == "pushbutton2"){
-            pushbutton2State = (value == "true") ? HIGH : LOW;
+            pushButton2.switchState = (value == "true") ? HIGH : LOW;
         } else if(node.getId() == "pushbutton3"){
-            pushbutton3State = (value == "true") ? HIGH : LOW;
+            pushButton3.switchState = (value == "true") ? HIGH : LOW;
         } else if(node.getId() == "pushbutton4"){
-            pushbutton4State = (value == "true") ? HIGH : LOW;            
+            pushButton4.switchState = (value == "true") ? HIGH : LOW;            
         } else {
             return false; // Unknown Node. Return unhandled            
         }
@@ -143,11 +194,9 @@ bool globalInputHandler(const HomieNode& node, const String& property, const Hom
 
 void loopHandler(){
 
-    checkPushButton(pushbutton1Node, debouncer1.read(), pushbutton1State, pushbutton1LastReading);
-    checkPushButton(pushbutton2Node, debouncer2.read(), pushbutton2State, pushbutton2LastReading);
-    checkPushButton(pushbutton3Node, debouncer3.read(), pushbutton3State, pushbutton3LastReading);
-    checkPushButton(pushbutton4Node, debouncer4.read(), pushbutton4State, pushbutton4LastReading);
+    checkPushButton(pushbutton1Node, pushButton1.debouncer.read(), pushButton1);
+    checkPushButton(pushbutton2Node, pushButton2.debouncer.read(), pushButton2);
+    checkPushButton(pushbutton3Node, pushButton3.debouncer.read(), pushButton3);
+    checkPushButton(pushbutton4Node, pushButton4.debouncer.read(), pushButton4);
 
 }
-
-#pragma endregion
