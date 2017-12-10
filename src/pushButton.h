@@ -1,3 +1,10 @@
+/*
+    pushButton.h - Library for ESP8266 4 way pushbutton dimmer switch project
+    Creadted by Jerome Luckenbach, 2017-12-09
+    Released under MIT License
+*/
+#ifndef pushButton_h
+#define pushButton_h
 #include <Homie.h>
 
 class  pushButton {
@@ -13,13 +20,4 @@ class  pushButton {
     public:
         pushButton();
 };
-
-pushButton::pushButton(){
-    lastReading = -1;
-    lastReadingTime = 0;
-    switchState = 0;
-    dimmerValue = 0;
-    dimmerReadingTime = 0;
-    dimmerMode = false;
-    debouncer = Bounce();
-}
+#endif
