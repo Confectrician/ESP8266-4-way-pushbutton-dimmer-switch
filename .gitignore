@@ -1,5 +1,6 @@
 .pioenvs
 .piolibdeps
 .vscode/
-data/homie/
+data/homie/config.json
+data/homie/ui_bundle.gz
 .vscode/c_cpp_properties.json
