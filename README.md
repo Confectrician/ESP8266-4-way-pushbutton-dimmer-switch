@@ -3,6 +3,8 @@
 This is a project that uses 4 inputs on a Wemos D1 Mini, to interact as pushbutton, switch or dimmer over mqtt.
 It is based on [homie convention](marvinroger/homie) and uses the [homie-esp8266](marvinroger/homie-esp8266) framework.
 
+![Breadboard test setup](/Confectrician/ESP8266-4-way-pushbutton-dimmer-switch/blob/master/images/breadboard.jpg)
+
 ## Concepts
 
 According to the convention our topic will start with `base/decive-id` like it has been configured.
