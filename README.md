@@ -13,7 +13,7 @@ You can also configure the `NODE_TYPE` here for the device meta informations, th
 Every pushbutton has 3 functional mqqt topics configured.
 
 - `pressed` indicates if the pushbutton is pressed currently
-- `switchState` provides a switchmode, which will alternate between `true` and `false` (this will probably change in the future)
+- `switchState` provides a switchmode, which will alternate between `true` and `false`
 - `dimmerValue` provides a value between `0` and `100`
 
 An example topic would for a dimmerValue would then be `homie/livingroom-multidimmer/pushbutton1/dimmerValue`.
