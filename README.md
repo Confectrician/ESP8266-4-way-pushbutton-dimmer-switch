@@ -1,7 +1,7 @@
 # ESP8266 4-Way Pushbutton Dimmer Switch
 
 This is a project that uses 4 inputs on a Wemos D1 Mini, to interact as pushbutton, switch or dimmer over mqtt.
-It is based on [homie convention](marvinroger/homie) and uses the [homie-esp8266](marvinroger/homie-esp8266) framework.
+It is based on [homie convention](https://github.com/marvinroger/homie) and uses the [homie-esp8266](https://github.com/marvinroger/homie-esp8266) framework.
 
 ![Breadboard test setup](https://github.com/Confectrician/ESP8266-4-way-pushbutton-dimmer-switch/blob/master/images/breadboard.jpg?raw=true)
 
