@@ -18,10 +18,10 @@ Every pushbutton has 3 functional mqqt topics configured.
 
 An example topic would for a dimmerValue would then be `homie/livingroom-multidimmer/pushbutton1/dimmerValue`.
 
-The pushbuttons will reacti different depending on the time they have been pushed.
-Short push actions will be interpreted as a *tap-action* and just affect the `switchState` topic.
-Longer push actions will be interpreted as a *dimm-action* and change the `dimmerValue`.
-The  `dimmerValue` is *increased* or *decreased* depending on the `switchState` **and** the current `dimmerValue` itself.
+The pushbuttons will react different depending on the time they have been pushed.
+Short push actions will be interpreted as a *tap-action* and just affect the *switchState* topic.
+Longer push actions will be interpreted as a *dimm-action* and change the *dimmerValue*.
+The  *dimmerValue* is *increased* or *decreased* depending on the *switchState* **and** the current *dimmerValue* itself.
 
 - *increased* when
 `switchState` is LOW/false and the current `dimmerValue` is lower than or equal to `100`
