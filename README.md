@@ -37,8 +37,9 @@ The  *dimmerValue* is *increased* or *decreased* depending on the *switchState* 
 > partly tbd - just a testing setup @ the moment
 
 - Wemos D1 Mini
+- 4 pushbuttons of your choice to connect to the pcb
 - 2 10kΩ resistors (see pinout information)
-- pushbuttons
+- Conectors with 0.2in/5.08mm space between the pins
 - A DC source of your choice to power up the Wemos
 
 ### Custom PCB
