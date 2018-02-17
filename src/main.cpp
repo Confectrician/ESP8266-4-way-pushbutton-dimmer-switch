@@ -61,7 +61,7 @@ void setup() {
 
 
     // Homie configuration
-    Homie_setFirmware("4-way-pushbutton-dimmer-switch", "1.0.0"); 
+    Homie_setFirmware("4-way-pushbutton-dimmer-switch", "1.0.2"); 
     Homie.disableResetTrigger(); // Needed to prevent resetting the device by mistake, since we are using D3 input.
     Homie.setGlobalInputHandler(globalInputHandler);
     Homie.setLoopFunction(loopHandler);
